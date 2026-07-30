@@ -1,0 +1,15 @@
+services:
+  # Bot de Discord "Ordenador" (comandos !uniforme y !armas).
+  # Es un bot de gateway (conexion permanente), asi que se despliega como
+  # "web service" en el plan free: el propio bot levanta un mini servidor HTTP
+  # (ver start_keepalive_server en bot.py) que escucha en $PORT para que Render
+  # lo mantenga vivo. Un ping externo (UptimeRobot) evita que se duerma.
+  - type: web
+    name: ordenador-discord-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
