@@ -57,6 +57,21 @@ SEMI_AUTOMATICAS = [
     ("Revolver Nerf", "255K"),
 ]
 
+# Precio mostrado como "entero / mitad".
+AUTOMATICAS = [
+    ("Nerf Tec", "110.000 / 55.000"),
+    ("Nerf AP Elite", "115.000 / 57.500"),
+    ("Nerf Rival Mini SMG", "150.000 / 75.000"),
+    ("Nerf Rival Micro SMG", "165.000 / 82.500"),
+    ("Nerf 90 N-Series", "180.000 / 90.000"),
+    ("Escopeta Nerf Recortada", "275.000 / 137.500"),
+    ("Nerf Gusemberg Ultra", "575.000 / 287.500"),
+    ("Fusil Nerf 47 Elite 2.0", "600.000 / 300.000"),
+    ("Nerf Fusil Avanzado Elite", "610.000 / 305.000"),
+    ("Nerf Bullpup Mega", "650.000 / 325.000"),
+    ("Nerf Franco Fortnite editions", "1.750.000 / 875.000"),
+]
+
 # Orden EXACTO en el que aparecen en la imagen (3 por fila)
 COMPONENTS = [
     ("🎭", "Máscara"),
@@ -197,10 +212,11 @@ async def uniforme(ctx: commands.Context):
     await ctx.send(f"✅ Publicado en <#{OUTPUT_CHANNEL_ID}>.")
 
 
-def build_armas_embed(titulo: str, items, minimo: int, emoji: str,
+def build_armas_embed(titulo: str, items, minimo, emoji: str,
                       logo_url: str = None) -> discord.Embed:
     """Crea un embed con el mismo estilo que las imagenes de la tienda.
 
+    minimo:   nº minimo de armas por pedido; None para no mostrar esa linea.
     logo_url: icono del autor y miniatura (se usa el icono del server).
     """
     lineas = [f"• **{nombre}** = `{precio}`" for nombre, precio in items]
@@ -209,8 +225,9 @@ def build_armas_embed(titulo: str, items, minimo: int, emoji: str,
         + "\n\n"
         + "*Para adquirir un producto abra un ticket; nuestros encargados "
         + "anónimos se pondrán en contacto lo antes posible contigo.*"
-        + f"\n\n( mínimo pedidos de {minimo} armas )"
     )
+    if minimo is not None:
+        descripcion += f"\n\n( mínimo pedidos de {minimo} armas )"
 
     fecha = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
 
@@ -231,9 +248,10 @@ async def armas(ctx: commands.Context, cual: str = "todo"):
     """Publica las listas de armas (Amazon) en el canal donde se escribe.
 
     Uso:
-      !armas          -> publica ambas listas (blancas + semi automaticas)
-      !armas blancas  -> solo Armas Blancas
-      !armas semi     -> solo Semi Automaticas
+      !armas             -> publica las tres listas
+      !armas blancas     -> solo Armas Blancas
+      !armas semi        -> solo Semi Automaticas
+      !armas automaticas -> solo Automaticas
     """
     cual = cual.lower()
 
@@ -249,9 +267,16 @@ async def armas(ctx: commands.Context, cual: str = "todo"):
         embeds.append(
             build_armas_embed("Semi Automaticas", SEMI_AUTOMATICAS, 3, "🔫", logo_url)
         )
+    if cual in ("todo", "automaticas", "automatica", "auto", "full"):
+        embeds.append(
+            build_armas_embed("Automaticas", AUTOMATICAS, None, "🔫", logo_url)
+        )
 
     if not embeds:
-        await ctx.reply("⚠️ Opción no válida. Usa `!armas`, `!armas blancas` o `!armas semi`.")
+        await ctx.reply(
+            "⚠️ Opción no válida. Usa `!armas`, `!armas blancas`, "
+            "`!armas semi` o `!armas automaticas`."
+        )
         return
 
     # Se publica en el mismo canal donde se escribio el comando.
