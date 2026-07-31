@@ -284,6 +284,43 @@ async def armas(ctx: commands.Context, cual: str = "todo"):
         await ctx.send(embed=embed)
 
 
+@bot.command(name="mensaje")
+async def mensaje(ctx: commands.Context, *, texto: str = None):
+    """Publica un mensaje libre con el mismo formato que las listas de armas.
+
+    La PRIMERA linea es el titulo; el resto (opcional) es el contenido.
+    Se publica en el mismo canal donde se escribe el comando.
+
+    Uso (una sola linea o varias con Shift+Enter):
+      !mensaje ⚔️ Aviso importante ⚔️
+      Aqui va el cuerpo del mensaje,
+      con las lineas que quieras.
+    """
+    if not texto or not texto.strip():
+        await ctx.reply(
+            "⚠️ Escribe el mensaje así (la 1ª línea es el título):\n"
+            "```\n!mensaje Título del mensaje\n"
+            "Aquí el contenido,\npuedes usar varias líneas (Shift+Enter).\n```"
+        )
+        return
+
+    partes = texto.split("\n", 1)
+    titulo = partes[0].strip()
+    cuerpo = partes[1].strip() if len(partes) > 1 and partes[1].strip() else None
+
+    # Mismo estilo que los embeds de armas.
+    logo_url = ctx.guild.icon.url if ctx.guild and ctx.guild.icon else None
+    fecha = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+    embed = discord.Embed(title=titulo, description=cuerpo, color=ARMAS_COLOR)
+    embed.set_author(name=ARMAS_AUTHOR, icon_url=logo_url)
+    if logo_url:
+        embed.set_thumbnail(url=logo_url)
+    embed.set_footer(text=f"Creado por {ARMAS_FOOTER_AUTHOR} · {fecha}")
+
+    await ctx.send(embed=embed)
+
+
 # --------------------------------------------------------------------------
 # Mini servidor HTTP (keepalive)
 # --------------------------------------------------------------------------
