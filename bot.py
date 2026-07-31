@@ -26,20 +26,12 @@ FOOTER_TEXT = "Uniformes Oficiales"
 # --------------------------------------------------------------------------
 # Configuracion del comando !armas  (tienda Amazon)
 # --------------------------------------------------------------------------
-# Canal donde se publican las listas de armas (guild "Amazon").
-ARMAS_GUILD_ID = 1532487997352837160
-ARMAS_CHANNEL_ID = 1532495873781665932
-
+# El comando !armas publica en el MISMO canal donde se escribe.
+# (Referencia del server Amazon: guild 1532487997352837160,
+#  canal de armas 1532495873781665932.)
 ARMAS_AUTHOR = "Encargados | • | Amazon"   # linea de arriba del embed
 ARMAS_FOOTER_AUTHOR = "Itachi"             # "Creado por Itachi"
-ARMAS_COLOR = 0xFF9900                      # naranja Amazon (barra lateral)
-
-# Logo que se muestra como miniatura y como icono del autor.
-# Cambialo por la URL de tu propio logo si quieres.
-AMAZON_LOGO_URL = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/"
-    "Amazon_logo.svg/2560px-Amazon_logo.svg.png"
-)
+ARMAS_COLOR = 0xED1C24                      # rojo (barra lateral)
 
 # Listas de precios (nombre, precio).  Editables sin tocar la logica.
 ARMAS_BLANCAS = [
@@ -205,8 +197,12 @@ async def uniforme(ctx: commands.Context):
     await ctx.send(f"✅ Publicado en <#{OUTPUT_CHANNEL_ID}>.")
 
 
-def build_armas_embed(titulo: str, items, minimo: int, emoji: str) -> discord.Embed:
-    """Crea un embed con el mismo estilo que las imagenes de la tienda."""
+def build_armas_embed(titulo: str, items, minimo: int, emoji: str,
+                      logo_url: str = None) -> discord.Embed:
+    """Crea un embed con el mismo estilo que las imagenes de la tienda.
+
+    logo_url: icono del autor y miniatura (se usa el icono del server).
+    """
     lineas = [f"• **{nombre}** = `{precio}`" for nombre, precio in items]
     descripcion = (
         "\n".join(lineas)
@@ -223,15 +219,16 @@ def build_armas_embed(titulo: str, items, minimo: int, emoji: str) -> discord.Em
         description=descripcion,
         color=ARMAS_COLOR,
     )
-    embed.set_author(name=ARMAS_AUTHOR, icon_url=AMAZON_LOGO_URL)
-    embed.set_thumbnail(url=AMAZON_LOGO_URL)
+    embed.set_author(name=ARMAS_AUTHOR, icon_url=logo_url)
+    if logo_url:
+        embed.set_thumbnail(url=logo_url)
     embed.set_footer(text=f"Creado por {ARMAS_FOOTER_AUTHOR} · {fecha}")
     return embed
 
 
 @bot.command(name="armas")
 async def armas(ctx: commands.Context, cual: str = "todo"):
-    """Publica las listas de armas (Amazon) en el canal configurado.
+    """Publica las listas de armas (Amazon) en el canal donde se escribe.
 
     Uso:
       !armas          -> publica ambas listas (blancas + semi automaticas)
@@ -239,28 +236,27 @@ async def armas(ctx: commands.Context, cual: str = "todo"):
       !armas semi     -> solo Semi Automaticas
     """
     cual = cual.lower()
+
+    # Icono del server (se usa como miniatura e icono del autor del embed).
+    logo_url = ctx.guild.icon.url if ctx.guild and ctx.guild.icon else None
+
     embeds = []
     if cual in ("todo", "blancas", "blanca"):
         embeds.append(
-            build_armas_embed("Armas Blancas", ARMAS_BLANCAS, 10, "⚔️")
+            build_armas_embed("Armas Blancas", ARMAS_BLANCAS, 10, "⚔️", logo_url)
         )
     if cual in ("todo", "semi", "semiautomaticas", "semiauto"):
         embeds.append(
-            build_armas_embed("Semi Automaticas", SEMI_AUTOMATICAS, 3, "🔫")
+            build_armas_embed("Semi Automaticas", SEMI_AUTOMATICAS, 3, "🔫", logo_url)
         )
 
     if not embeds:
         await ctx.reply("⚠️ Opción no válida. Usa `!armas`, `!armas blancas` o `!armas semi`.")
         return
 
-    # Canal de destino: el configurado; si el bot no lo encuentra, el actual.
-    destino = bot.get_channel(ARMAS_CHANNEL_ID) or ctx.channel
-
+    # Se publica en el mismo canal donde se escribio el comando.
     for embed in embeds:
-        await destino.send(embed=embed)
-
-    if destino.id != ctx.channel.id:
-        await ctx.reply(f"✅ Publicado en <#{destino.id}>.")
+        await ctx.send(embed=embed)
 
 
 # --------------------------------------------------------------------------
