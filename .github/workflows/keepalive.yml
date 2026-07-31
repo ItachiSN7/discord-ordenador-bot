@@ -1,23 +1,30 @@
 name: Keepalive Render
 
 # Render (plan free) duerme el servicio tras 15 min sin trafico, y con el el
-# bot se desconecta de Discord. Este workflow hace un ping cada 10 minutos a la
-# URL publica del servicio para mantenerlo despierto. No necesita secretos.
+# bot se desconecta de Discord (los mensajes de Discord NO lo despiertan, solo
+# peticiones HTTP). Este workflow hace ping cada 5 minutos y, ademas, dentro de
+# cada ejecucion pinguea 5 veces (1 por minuto) para cubrir huecos si GitHub
+# retrasa/salta algun cron. El repo es publico => minutos de Actions ilimitados.
+#
+# Aun asi, GitHub Actions no garantiza puntualidad: si necesitas 100% uptime, usa
+# un monitor externo (UptimeRobot / cron-job.org) o el worker de pago de Render.
 #
 # Nota: GitHub desactiva los cron tras 60 dias sin actividad en el repo. Si dejas
-# de tocar el repo mucho tiempo, entra a la pestana Actions y pulsa "Enable" /
-# ejecuta el workflow a mano para reactivarlo.
+# de tocar el repo mucho tiempo, entra a Actions y ejecuta el workflow a mano.
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping servicio de Render
+      - name: Ping servicio de Render (varias veces)
         run: |
-          echo "Ping a Render $(date -u)"
-          curl -fsS --max-time 90 https://ordenador-discord-bot.onrender.com || true
+          for i in 1 2 3 4 5; do
+            echo "Ping $i a Render $(date -u)"
+            curl -fsS --max-time 90 https://ordenador-discord-bot.onrender.com || true
+            [ "$i" -lt 5 ] && sleep 60
+          done
